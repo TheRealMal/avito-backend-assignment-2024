@@ -14,6 +14,6 @@ run: app.o
 	./app.o
 
 clean:
-	rm -rf ./app.o
+	rm -rf app.o
 
 rebuild: clean build

@@ -6,9 +6,11 @@
 ![Database Scheme](./assets/db_scheme.png)
 ## Setup
 ### PostgreSQL migration
-```
+```shell
 make install-migrate
 make migrate
 ```
 ### Server
+```shell
+make run
 ```

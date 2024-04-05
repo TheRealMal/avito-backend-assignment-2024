@@ -13,13 +13,15 @@ func (s ServiceHandler) HandleBannerID(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.HandleBannerIDDelete(w, r)
 	default:
-		// return 500
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
 
 func (s ServiceHandler) HandleBannerIDPatch(w http.ResponseWriter, r *http.Request) {
 	_, err := getBannerID(r.URL.Path)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }
@@ -27,6 +29,7 @@ func (s ServiceHandler) HandleBannerIDPatch(w http.ResponseWriter, r *http.Reque
 func (s ServiceHandler) HandleBannerIDDelete(w http.ResponseWriter, r *http.Request) {
 	_, err := getBannerID(r.URL.Path)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }

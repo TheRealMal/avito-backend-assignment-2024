@@ -12,7 +12,8 @@ func (s ServiceHandler) HandleBanner(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		s.HandleBannerPost(w, r)
 	default:
-		// return 500
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
 
@@ -32,6 +33,7 @@ func (s ServiceHandler) HandleBannerGet(w http.ResponseWriter, r *http.Request) 
 	// Parse params to struct
 	params := parseBannerGetParams(tag_id, feature_id, limit, offset)
 	if params == nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 

@@ -14,7 +14,7 @@ type UserBannerParams struct {
 // Get user banner request handler
 func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		w.Write([]byte("ERR"))
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -27,16 +27,16 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 	// Check required params and some formats
 	switch {
 	case len(tag_id) == 0:
-		w.Write([]byte("ERR"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	case len(feature_id) == 0:
-		w.Write([]byte("ERR"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	params := parseUserBannerParams(tag_id, feature_id, use_last_revision)
 	if params == nil {
-		w.Write([]byte("ERR"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	w.Write([]byte("OK"))
