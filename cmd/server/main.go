@@ -4,15 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	api "avito-backend/pkg/api"
+	server "avito-backend/pkg/server"
 )
 
 func main() {
-	// Create generated server.
-	srv, err := api.NewServer()
-	if err != nil {
-		log.Fatal(err)
-	}
+	srv := server.InitServerMux()
 	if err := http.ListenAndServe(":8080", srv); err != nil {
 		log.Fatal(err)
 	}
