@@ -10,16 +10,16 @@ type SQLDatabase struct {
 	C *pgx.Conn
 }
 
-func InitDB(databaseURL string) Database {
+func InitDB(databaseURL string) (SQLDatabase, error) {
 	res := SQLDatabase{}
 	var err error
 
 	res.C, err = pgx.Connect(context.Background(), databaseURL)
 	if err != nil {
-		return nil
+		return res, err
 	}
 
-	return res
+	return res, nil
 }
 
 type Database interface {

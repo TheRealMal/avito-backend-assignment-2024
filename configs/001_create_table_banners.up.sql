@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS banners (
+    id SERIAL PRIMARY KEY,
+    tag INT
+);
