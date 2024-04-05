@@ -4,6 +4,8 @@ install-migrate:
 
 migrate:
 	migrate -source file://configs -database "${DB_URL}" up
+migrate-drop:
+	migrate -source file://configs -database "${DB_URL}" drop
 
 app.o: 
 	go build -o app.o ./cmd/server/...
@@ -19,4 +21,4 @@ clean:
 rebuild: clean build
 
 load-test:
-	ab -n 1000 -c 100 -g report "http://localhost:8080/user_banner?tag_id=1&feature_id=1" > tests/user_banner_rps.txt
+	ab -n 1000 -c 100 "http://localhost:8080/user_banner?tag_id=1&feature_id=3" > tests/user_banner_rps.txt

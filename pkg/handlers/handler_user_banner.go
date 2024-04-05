@@ -41,7 +41,18 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Write([]byte("OK"))
+
+	response, err := s.db.GetBannerContent(params.TagID, params.FeatureID)
+	switch {
+	case err == nil:
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(*response)
+	case err != nil && response == nil:
+		w.WriteHeader(http.StatusNotFound)
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func parseUserBannerParams(params ...string) *UserBannerParams {
