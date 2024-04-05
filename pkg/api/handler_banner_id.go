@@ -18,14 +18,14 @@ func (s Service) HandleBannerID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Service) HandleBannerIDPatch(w http.ResponseWriter, r *http.Request) {
-	id, err := strings.TrimPrefix(r.URL.Path, "/banner/")
+	_, err := getBannerID(r.URL.Path)
 	if err != nil {
 		return
 	}
 }
 
 func (s Service) HandleBannerIDDelete(w http.ResponseWriter, r *http.Request) {
-	id, err := strings.TrimPrefix(r.URL.Path, "/banner/")
+	_, err := getBannerID(r.URL.Path)
 	if err != nil {
 		return
 	}
