@@ -20,3 +20,13 @@ Load testing can be performed via Apache Bench. Results can be viewied inside `t
 ```shell
 make load-test
 ```
+
+## TODO
+- [x] REST API
+- [x] PostgreSQL Tables
+- [ ] Implement SQL queries execution
+- [ ] Implement users & admins auth via JWT
+- [ ] Add cache (HashMap/Redis)
+- [ ] Add functional tests
+- [ ] Add load tests
+- [ ] Pack app into image and make docker compose file
