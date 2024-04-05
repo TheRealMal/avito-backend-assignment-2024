@@ -11,6 +11,8 @@ type UserBannerParams struct {
 	UseLastRevision bool
 }
 
+var Counter int = 0
+
 // Get user banner request handler
 func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
