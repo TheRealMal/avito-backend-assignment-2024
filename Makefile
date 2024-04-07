@@ -1,24 +1,44 @@
+# -------------------------
+#	Migration
+# -------------------------
 
+# Install postgres migration tool
 install-migrate:
 	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
+# Migrate UP
 migrate:
 	migrate -source file://configs -database "${DB_URL}" up
+
+# Migrate DROP
 migrate-drop:
 	migrate -source file://configs -database "${DB_URL}" drop
 
-app.o: 
+# -------------------------
+#	App build & run
+# -------------------------
+
+# For next targets
+app.o:
 	go build -o app.o ./cmd/server/...
 
+# Build executable
 build: app.o
 
+# Run executable
 run: app.o
 	./app.o
 
+# Clean compiled & generated files
 clean:
 	rm -rf app.o tests/*.txt
 
+# Rebuild executable
 rebuild: clean build
 
+# Rebuild and run executable
+rerun: rebuild run
+
+# Run load test via Apache Bench
 load-test:
-	ab -n 1000 -c 100 "http://localhost:8080/user_banner?tag_id=1&feature_id=3" > tests/user_banner_rps.txt
+	ab -n 1000 -c 100 "http://localhost:8080/banner" > tests/user_banner_rps.txt

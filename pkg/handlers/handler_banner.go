@@ -1,8 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+)
+
+const (
+	DEFAULT_LIMIT  = 100
+	DEFAULT_OFFSET = 0
 )
 
 func (s ServiceHandler) HandleBanner(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +43,17 @@ func (s ServiceHandler) HandleBannerGet(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	w.Write([]byte("OK"))
+	fmt.Println(params)
+	banners, err := s.db.GetBanners(params.TagID, params.FeatureID, params.Limit, params.Offset)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(banners)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(banners)
 }
 
 func parseBannerGetParams(params ...string) *BannerGetParams {
@@ -48,22 +64,22 @@ func parseBannerGetParams(params ...string) *BannerGetParams {
 		case 0:
 			result.TagID, err = strconv.Atoi(param)
 			if err != nil {
-				return nil
+				result.TagID = -1
 			}
 		case 1:
 			result.FeatureID, err = strconv.Atoi(param)
 			if err != nil {
-				return nil
+				result.FeatureID = -1
 			}
 		case 2:
 			result.Limit, err = strconv.Atoi(param)
 			if err != nil {
-				return nil
+				result.Limit = DEFAULT_LIMIT
 			}
 		case 3:
 			result.Offset, err = strconv.Atoi(param)
 			if err != nil {
-				return nil
+				result.Offset = DEFAULT_OFFSET
 			}
 		}
 	}

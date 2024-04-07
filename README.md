@@ -4,10 +4,10 @@
 
 > Decided to use two tables: banners and features; this allows us to have multiple features for single banner. Scheme is shown in a picture.  
 
+<img src="./assets/db_scheme.png" width=50%>
+
 > How to get 403 status for /user_banner...? Under these conditions probably when token is incorrect.
 
-
-![Database Scheme](./assets/db_scheme.png)
 ## Setup
 ### PostgreSQL migration
 ```shell
@@ -16,6 +16,7 @@ make migrate
 ```
 ### Server
 ```shell
+make build
 make run
 ```
 
@@ -29,7 +30,14 @@ make load-test
 - [x] REST API
 - [x] PostgreSQL Tables
 - [ ] Implement SQL queries execution
+    - [x] GET /user_banner
+    - [x] GET /banner
+    - [ ] POST /banner
+    - [ ] PATCH /banner/{id}
+    - [ ] DELETE /banner/{id}
 - [ ] Implement users & admins auth via JWT
+    - [ ] Users auth
+    - [ ] Admins auth
 - [ ] Add cache (HashMap/Redis)
 - [ ] Add functional tests
 - [ ] Add load tests
