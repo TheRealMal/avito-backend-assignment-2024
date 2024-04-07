@@ -16,7 +16,6 @@ make migrate
 ```
 ### Server
 ```shell
-make build
 make run
 ```
 
@@ -29,7 +28,7 @@ make load-test
 ## TODO
 - [x] REST API
 - [x] PostgreSQL Tables
-- [ ] Implement SQL queries execution
+- [ ] Implement SQL queries execution for:
     - [x] GET /user_banner
     - [x] GET /banner
     - [ ] POST /banner
