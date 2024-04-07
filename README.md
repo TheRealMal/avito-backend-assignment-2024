@@ -38,6 +38,7 @@ make load-test
     - [ ] Users auth
     - [ ] Admins auth
 - [ ] Add cache (HashMap/Redis)
-- [ ] Add functional tests
+- [ ] Add some data to be loaded into db for load tests and optimization
 - [ ] Add load tests
+- [ ] Add functional tests
 - [ ] Pack app into image and make docker compose file
