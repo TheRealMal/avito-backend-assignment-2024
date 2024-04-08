@@ -1,0 +1,27 @@
+version: '3.9'
+name: avito-backend
+services:
+  postgres:
+    image: postgres:alpine
+    env_file:
+      - .env
+    volumes:
+      - ./configs:/docker-entrypoint-initdb.d/
+    # volumes:
+    #   - ./data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+
+  server:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    environment:
+      - WAIT_HOSTS=postgres:5432
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=30
+      - WAIT_HOST_CONNECT_TIMEOUT=30

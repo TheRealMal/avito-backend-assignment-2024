@@ -8,11 +8,11 @@ install-migrate:
 
 # Migrate UP
 migrate:
-	migrate -source file://configs -database "${DB_URL}" up
+	migrate -source file://configs -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable" up
 
 # Migrate DROP
 migrate-drop:
-	migrate -source file://configs -database "${DB_URL}" drop
+	migrate -source file://configs -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable" drop
 
 # -------------------------
 #	App build & run

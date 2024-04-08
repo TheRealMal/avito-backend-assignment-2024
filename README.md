@@ -41,4 +41,4 @@ make load-test
 - [ ] Add some data to be loaded into db for load tests and optimization
 - [ ] Add load tests
 - [ ] Add functional tests
-- [ ] Pack app into image and make docker compose file
+- [x] Pack app into image and make docker compose file
