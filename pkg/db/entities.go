@@ -1,8 +1,9 @@
 package db
 
 import (
-	"encoding/json"
 	"time"
+
+	"github.com/goccy/go-json"
 )
 
 type Banner struct {

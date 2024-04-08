@@ -8,15 +8,12 @@
 
 > How to get 403 status for /user_banner...? Under these conditions probably when token is incorrect.
 
+> Decided to use go-json module [[Benchmarks]](https://github.com/goccy/go-json?tab=readme-ov-file#benchmarks)
+
 ## Setup
-### PostgreSQL migration
-```shell
-make install-migrate
-make migrate
-```
 ### Server
 ```shell
-make run
+docker-compose up -d
 ```
 
 ## Load testing
@@ -28,17 +25,18 @@ make load-test
 ## TODO
 - [x] REST API
 - [x] PostgreSQL Tables
-- [ ] Implement SQL queries execution for:
+- [x] Implement SQL queries execution for:
     - [x] GET /user_banner
     - [x] GET /banner
-    - [ ] POST /banner
-    - [ ] PATCH /banner/{id}
-    - [ ] DELETE /banner/{id}
+    - [x] POST /banner
+    - [x] PATCH /banner/{id}
+        - [x] Check if id inside table
+    - [x] DELETE /banner/{id}
+        - [x] Check if id inside table
 - [ ] Implement users & admins auth via JWT
     - [ ] Users auth
     - [ ] Admins auth
 - [ ] Add cache (HashMap/Redis)
-- [ ] Add some data to be loaded into db for load tests and optimization
 - [ ] Add load tests
 - [ ] Add functional tests
 - [x] Pack app into image and make docker compose file

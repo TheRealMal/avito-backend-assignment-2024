@@ -3,6 +3,7 @@ module avito-backend
 go 1.21.3
 
 require (
+	github.com/goccy/go-json v0.10.2
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/joho/godotenv v1.5.1
 )

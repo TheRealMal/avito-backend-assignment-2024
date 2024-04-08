@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
+	"avito-backend/pkg/db"
 	"net/http"
 	"strconv"
+
+	"github.com/goccy/go-json"
 )
 
 const (
@@ -43,17 +44,15 @@ func (s ServiceHandler) HandleBannerGet(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println(params)
 	banners, err := s.db.GetBanners(params.TagID, params.FeatureID, params.Limit, params.Offset)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(banners)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(banners)
+	json.NewEncoder(w)
 }
 
 func parseBannerGetParams(params ...string) *BannerGetParams {
@@ -87,5 +86,17 @@ func parseBannerGetParams(params ...string) *BannerGetParams {
 }
 
 func (s ServiceHandler) HandleBannerPost(w http.ResponseWriter, r *http.Request) {
-	// JSON Request Body
+	decoder := json.NewDecoder(r.Body)
+	var banner db.Banner
+	err := decoder.Decode(&banner)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err = s.db.CreateBanner(banner)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
