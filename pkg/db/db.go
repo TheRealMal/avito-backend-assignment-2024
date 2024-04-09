@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,6 +22,8 @@ const (
 	QueryInsertBannerTag           = "INSERT INTO tags (id, banner_id) VALUES ($1, $2);"
 	QueryDeleteBannerTags          = "DELETE FROM tags WHERE banner_id = $1;"
 	QueryDeleteBanner              = "DELETE FROM banners WHERE id = $1;"
+
+	cacheTTL = 5 * time.Minute
 )
 
 type SQLDatabase struct {
@@ -43,6 +46,9 @@ func InitDB(databaseURL string) (SQLDatabase, error) {
 }
 
 type Database interface {
+	Close()
+	StartInvalidator(context.Context)
+
 	CacheGetBannerContent(int, int) (*[]byte, bool)
 	CacheSetBannerContent(int, int, *[]byte)
 
@@ -51,6 +57,25 @@ type Database interface {
 	CreateBanner(Banner) error
 	UpdateBanner(int, *[]int, *int, *json.RawMessage, *bool) (bool, error)
 	DeleteBanner(int) (bool, error)
+}
+
+func (db SQLDatabase) Close() {
+	db.pool.Close()
+}
+
+func (db SQLDatabase) StartInvalidator(ctx context.Context) {
+	tt := time.NewTicker(cacheTTL)
+
+	for {
+		select {
+		case <-tt.C:
+			db.mu.Lock()
+			db.cache = make(map[int]map[int]*[]byte)
+			db.mu.Unlock()
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (db SQLDatabase) CacheGetBannerContent(tagID int, featureID int) (*[]byte, bool) {
