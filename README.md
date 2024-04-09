@@ -44,6 +44,9 @@ make load-test
 - [x] Add cache (Simple map cache)
     - [x] Add goroutine that clears cache every 5 mins
 - [x] Add graceful shutdown
-- [ ] Add load tests
+- [ ] If banner is inactive then only admins can access it.
+    - [ ] Pass context with role for /user_banner to check if content should be shown
+    - [ ] Add is_active field to cache
 - [ ] Add functional tests
+- [ ] Add load tests
 - [x] Pack app into image and make docker compose file
