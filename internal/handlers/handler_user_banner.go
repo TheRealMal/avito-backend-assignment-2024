@@ -39,9 +39,27 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	response, err := s.db.GetBannerContent(params.TagID, params.FeatureID, params.UseLastRevision)
+	response, isActive, err := s.db.GetBannerContent(params.TagID, params.FeatureID, params.UseLastRevision)
 	switch {
 	case err == nil && response != nil:
+		// Get role from ctx
+		untypedRole := r.Context().Value(ContextRoleKey)
+		if untypedRole == nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		// Cast to string
+		role, ok := untypedRole.(string)
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		// If not active and not admin
+		if !isActive && role != AdminRole {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(*response)

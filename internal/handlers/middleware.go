@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +14,12 @@ const (
 	MinAuthHeadersLen = 6 // "Token ..."
 	AdminRole         = "ADMIN"
 	UserRole          = "USER"
+)
+
+type ContextKey int
+
+const (
+	ContextRoleKey ContextKey = iota
 )
 
 var (
@@ -32,12 +39,12 @@ func AdminMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		authorized, err := checkToken(string(token[MinAuthHeadersLen:]), AdminRole)
+		role, err := checkToken(string(token[MinAuthHeadersLen:]), AdminRole)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		if !authorized {
+		if role != AdminRole {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
@@ -52,25 +59,22 @@ func UserMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		var err error
-		var authorized bool
-		for _, role := range roles {
-			authorized, err = checkToken(string(token[MinAuthHeadersLen:]), role)
-			if err != nil {
-				continue
-			}
-			if !authorized {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			next.ServeHTTP(w, r)
+		role, err := checkToken(string(token[MinAuthHeadersLen:]), AdminRole)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		w.WriteHeader(http.StatusForbidden)
+		if role != AdminRole && role != UserRole {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextRoleKey, role)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func checkToken(inputToken string, checkRole string) (bool, error) {
+func checkToken(inputToken string, checkRole string) (string, error) {
 	hashSecretGetter := func(token *jwt.Token) (interface{}, error) {
 		method, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok || method.Alg() != "HS256" {
@@ -83,26 +87,23 @@ func checkToken(inputToken string, checkRole string) (bool, error) {
 	token, err := jwt.Parse(inputToken, hashSecretGetter)
 	if err != nil {
 		fmt.Println(err)
-		return false, errors.New("bad token")
+		return "", errors.New("bad token")
 	}
 	if !token.Valid {
-		return false, nil
+		return "", nil
 	}
 
 	// Unpack token claims
 	payload, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return false, errors.New("bad token")
+		return "", errors.New("bad token")
 	}
 	// Get field "role" and verify
 	userRole, ok := payload["role"].(string)
 	if !ok {
-		return false, errors.New("bad token")
+		return "", errors.New("bad token")
 	}
-	if userRole != checkRole {
-		return false, nil
-	}
-	return true, nil
+	return userRole, nil
 }
 
 func NewJWT(role string) *string {

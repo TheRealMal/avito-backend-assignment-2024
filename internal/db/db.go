@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	QueryGetUserBanner             = "SELECT b.content FROM banners b JOIN tags t ON t.banner_id = b.id WHERE t.id=$1 AND b.feature=$2;"
+	QueryGetUserBanner             = "SELECT b.content, b.is_active FROM banners b JOIN tags t ON t.banner_id = b.id WHERE t.id=$1 AND b.feature=$2;"
 	QueryGetBanners                = "SELECT b.id, b.feature, b.content, b.created_at, b.updated_at, b.is_active, array_agg(t.id) FROM banners b JOIN tags t ON t.banner_id = b.id GROUP BY b.id LIMIT $1 OFFSET $2;"
 	QueryGetBannersFilterByFeature = "SELECT b.id, b.feature, b.content, b.created_at, b.updated_at, b.is_active, array_agg(t.id) FROM banners b JOIN tags t ON t.banner_id = b.id GROUP BY b.id HAVING b.feature = $1 LIMIT $2 OFFSET $3;"
 	QueryGetBannersFilterByTag     = "SELECT b.id, b.feature, b.content, b.created_at, b.updated_at, b.is_active, array_agg(t.id) FROM banners b JOIN tags t ON t.banner_id = b.id WHERE t.id = $1 GROUP BY b.id LIMIT $2 OFFSET $3;"
@@ -28,8 +28,13 @@ const (
 
 type SQLDatabase struct {
 	pool  *pgxpool.Pool
-	cache map[int]map[int]*[]byte
+	cache map[[2]int]CachedData
 	mu    *sync.RWMutex
+}
+
+type CachedData struct {
+	Content  *json.RawMessage
+	IsActive bool
 }
 
 func InitDB(databaseURL string) (SQLDatabase, error) {
@@ -40,7 +45,7 @@ func InitDB(databaseURL string) (SQLDatabase, error) {
 	if err != nil {
 		return res, err
 	}
-	res.cache = make(map[int]map[int]*[]byte)
+	res.cache = make(map[[2]int]CachedData)
 	res.mu = &sync.RWMutex{}
 	return res, nil
 }
@@ -49,10 +54,10 @@ type Database interface {
 	Close()
 	StartInvalidator(context.Context)
 
-	CacheGetBannerContent(int, int) (*[]byte, bool)
-	CacheSetBannerContent(int, int, *[]byte)
+	CacheGetBannerContent(int, int) (*json.RawMessage, bool, bool)
+	CacheSetBannerContent(int, int, *json.RawMessage, bool)
 
-	GetBannerContent(int, int, bool) (*[]byte, error)
+	GetBannerContent(int, int, bool) (*json.RawMessage, bool, error)
 	GetBanners(int, int, int, int) ([]Banner, error)
 	CreateBanner(Banner) error
 	UpdateBanner(int, *[]int, *int, *json.RawMessage, *bool) (bool, error)
@@ -70,7 +75,7 @@ func (db SQLDatabase) StartInvalidator(ctx context.Context) {
 		select {
 		case <-tt.C:
 			db.mu.Lock()
-			db.cache = make(map[int]map[int]*[]byte)
+			db.cache = make(map[[2]int]CachedData)
 			db.mu.Unlock()
 		case <-ctx.Done():
 			return
@@ -78,56 +83,51 @@ func (db SQLDatabase) StartInvalidator(ctx context.Context) {
 	}
 }
 
-func (db SQLDatabase) CacheGetBannerContent(tagID int, featureID int) (*[]byte, bool) {
+func (db SQLDatabase) CacheGetBannerContent(tagID int, featureID int) (*json.RawMessage, bool, bool) {
 	db.mu.RLock()
-	getFeatures, ok := db.cache[featureID]
+	getData, ok := db.cache[[2]int{tagID, featureID}]
 	db.mu.RUnlock()
 	if !ok {
-		return nil, false
+		return nil, false, false
 	}
-
-	db.mu.RLock()
-	getContent, ok := getFeatures[tagID]
-	db.mu.RUnlock()
-	if !ok {
-		return nil, false
-	}
-	return getContent, true
+	return getData.Content, getData.IsActive, true
 }
 
-func (db SQLDatabase) CacheSetBannerContent(tagID int, featureID int, content *[]byte) {
+func (db SQLDatabase) CacheSetBannerContent(tagID int, featureID int, content *json.RawMessage, isActive bool) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if _, ok := db.cache[featureID]; !ok {
-		db.cache[featureID] = make(map[int]*[]byte)
+	db.cache[[2]int{tagID, featureID}] = CachedData{
+		Content:  content,
+		IsActive: isActive,
 	}
-	db.cache[featureID][tagID] = content
 }
 
-func (db SQLDatabase) GetBannerContent(tagID int, featureID int, straightToDB bool) (*[]byte, error) {
+func (db SQLDatabase) GetBannerContent(tagID int, featureID int, straightToDB bool) (*json.RawMessage, bool, error) {
+	var content json.RawMessage
+	var isActive bool
 	if !straightToDB {
-		cachedContent, ok := db.CacheGetBannerContent(tagID, featureID)
+		content, isActive, ok := db.CacheGetBannerContent(tagID, featureID)
 		if ok {
-			return cachedContent, nil
+			return content, isActive, nil
 		}
 	}
 
-	var content []byte
 	err := db.pool.QueryRow(
 		context.Background(),
 		QueryGetUserBanner,
 		tagID,
 		featureID,
-	).Scan(&content)
-	db.CacheSetBannerContent(tagID, featureID, &content)
+	).Scan(&content, &isActive)
+
+	db.CacheSetBannerContent(tagID, featureID, &content, isActive)
 	switch err {
 	case nil:
-		return &content, nil
+		return &content, isActive, nil
 	case pgx.ErrNoRows:
-		return nil, nil
+		return nil, false, nil
 	default:
-		return nil, err
+		return nil, false, err
 	}
 }
 
