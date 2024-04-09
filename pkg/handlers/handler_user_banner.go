@@ -39,8 +39,7 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	response, err := s.db.GetBannerContent(params.TagID, params.FeatureID)
+	response, err := s.db.GetBannerContent(params.TagID, params.FeatureID, params.UseLastRevision)
 	switch {
 	case err == nil && response != nil:
 		w.WriteHeader(http.StatusOK)
@@ -56,7 +55,9 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 }
 
 func parseUserBannerParams(params ...string) *UserBannerParams {
-	result := &UserBannerParams{}
+	result := &UserBannerParams{
+		UseLastRevision: false,
+	}
 	var err error
 	for idx, param := range params {
 		switch idx {

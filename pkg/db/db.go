@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,7 +24,9 @@ const (
 )
 
 type SQLDatabase struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	cache map[int]map[int]*[]byte
+	mu    *sync.RWMutex
 }
 
 func InitDB(databaseURL string) (SQLDatabase, error) {
@@ -34,19 +37,57 @@ func InitDB(databaseURL string) (SQLDatabase, error) {
 	if err != nil {
 		return res, err
 	}
-
+	res.cache = make(map[int]map[int]*[]byte)
+	res.mu = &sync.RWMutex{}
 	return res, nil
 }
 
 type Database interface {
-	GetBannerContent(tagID int, featureID int) (*[]byte, error)
-	GetBanners(tagID int, featureID int, limit int, offset int) ([]Banner, error)
-	CreateBanner(banner Banner) error
-	UpdateBanner(id int, tagIDs *[]int, featureID *int, content *json.RawMessage, isActive *bool) (bool, error)
-	DeleteBanner(id int) (bool, error)
+	CacheGetBannerContent(int, int) (*[]byte, bool)
+	CacheSetBannerContent(int, int, *[]byte)
+
+	GetBannerContent(int, int, bool) (*[]byte, error)
+	GetBanners(int, int, int, int) ([]Banner, error)
+	CreateBanner(Banner) error
+	UpdateBanner(int, *[]int, *int, *json.RawMessage, *bool) (bool, error)
+	DeleteBanner(int) (bool, error)
 }
 
-func (db SQLDatabase) GetBannerContent(tagID int, featureID int) (*[]byte, error) {
+func (db SQLDatabase) CacheGetBannerContent(tagID int, featureID int) (*[]byte, bool) {
+	db.mu.RLock()
+	getFeatures, ok := db.cache[featureID]
+	db.mu.RUnlock()
+	if !ok {
+		return nil, false
+	}
+
+	db.mu.RLock()
+	getContent, ok := getFeatures[tagID]
+	db.mu.RUnlock()
+	if !ok {
+		return nil, false
+	}
+	return getContent, true
+}
+
+func (db SQLDatabase) CacheSetBannerContent(tagID int, featureID int, content *[]byte) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if _, ok := db.cache[featureID]; !ok {
+		db.cache[featureID] = make(map[int]*[]byte)
+	}
+	db.cache[featureID][tagID] = content
+}
+
+func (db SQLDatabase) GetBannerContent(tagID int, featureID int, straightToDB bool) (*[]byte, error) {
+	if !straightToDB {
+		cachedContent, ok := db.CacheGetBannerContent(tagID, featureID)
+		if ok {
+			return cachedContent, nil
+		}
+	}
+
 	var content []byte
 	err := db.pool.QueryRow(
 		context.Background(),
@@ -54,7 +95,7 @@ func (db SQLDatabase) GetBannerContent(tagID int, featureID int) (*[]byte, error
 		tagID,
 		featureID,
 	).Scan(&content)
-
+	db.CacheSetBannerContent(tagID, featureID, &content)
 	switch err {
 	case nil:
 		return &content, nil

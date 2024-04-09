@@ -41,4 +41,7 @@ rerun: rebuild run
 
 # Run load test via Apache Bench
 load-test:
-	ab -n 1000 -c 100 "localhost:8080/user_banner?tag_id=365172912&feature_id=2130129125" > tests/user_banner_rps.txt
+	ab -n 1000 -c 100 \
+	-H "Authorization: Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIyMDI0LTA0LTA5VDE1OjE2OjM3LjQ3MTgxNCswMzowMCIsInJvbGUiOiJBRE1JTiJ9.SxtAMmheKazDXaAjg2zDo8FUWQrbq9Wm47o8rOcZuF0" \
+	"localhost:8080/user_banner?tag_id=1008409329&feature_id=217569698&use_last_revision=true" \
+	> tests/user_banner_rps.txt
