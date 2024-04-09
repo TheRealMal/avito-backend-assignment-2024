@@ -1,4 +1,6 @@
 # [Avito Backend Trainee Project](https://github.com/avito-tech/backend-trainee-assignment-2024?tab=readme-ov-file)
+You can find postman API docs [here](https://documenter.getpostman.com/view/30507430/2sA3BgAFUB).
+
 ## Some thoughts...
 > Found out that it's possible to use codegenerators to parse `openapi.yml` file and generated handlers. But generated code was too strange and I decided to do it by myself....
 
