@@ -25,8 +25,3 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - WAIT_HOSTS=postgres:5432
-      - WAIT_HOSTS_TIMEOUT=300
-      - WAIT_SLEEP_INTERVAL=30
-      - WAIT_HOST_CONNECT_TIMEOUT=30
