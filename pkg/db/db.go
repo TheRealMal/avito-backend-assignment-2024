@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	QueryGetUserBanner             = "SELECT b.content FROM banners b JOIN tags t ON t.banner_id = b.id WHERE t.id=$2 AND b.feature=$1;"
+	QueryGetUserBanner             = "SELECT b.content FROM banners b JOIN tags t ON t.banner_id = b.id WHERE t.id=$1 AND b.feature=$2;"
 	QueryGetBanners                = "SELECT b.id, b.feature, b.content, b.created_at, b.updated_at, b.is_active, array_agg(t.id) FROM banners b JOIN tags t ON t.banner_id = b.id GROUP BY b.id LIMIT $1 OFFSET $2;"
 	QueryGetBannersFilterByFeature = "SELECT b.id, b.feature, b.content, b.created_at, b.updated_at, b.is_active, array_agg(t.id) FROM banners b JOIN tags t ON t.banner_id = b.id GROUP BY b.id HAVING b.feature = $1 LIMIT $2 OFFSET $3;"
 	QueryGetBannersFilterByTag     = "SELECT b.id, b.feature, b.content, b.created_at, b.updated_at, b.is_active, array_agg(t.id) FROM banners b JOIN tags t ON t.banner_id = b.id WHERE t.id = $1 GROUP BY b.id LIMIT $2 OFFSET $3;"

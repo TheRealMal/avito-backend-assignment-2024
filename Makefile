@@ -41,4 +41,4 @@ rerun: rebuild run
 
 # Run load test via Apache Bench
 load-test:
-	ab -n 1000 -c 100 "http://localhost:8080/banner" > tests/user_banner_rps.txt
+	ab -n 1000 -c 100 "localhost:8080/user_banner?tag_id=365172912&feature_id=2130129125" > tests/user_banner_rps.txt
