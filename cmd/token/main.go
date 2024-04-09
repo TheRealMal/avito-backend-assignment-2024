@@ -1,7 +1,7 @@
 package main
 
 import (
-	"avito-backend/pkg/handlers"
+	"avito-backend/internal/handlers"
 	"fmt"
 	"log"
 	"os"

@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"avito-backend/pkg/db"
-	"avito-backend/pkg/handlers"
+	"avito-backend/internal/db"
+	"avito-backend/internal/handlers"
 
 	"github.com/joho/godotenv"
 )

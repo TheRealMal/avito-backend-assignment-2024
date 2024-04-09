@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"avito-backend/pkg/db"
+	"avito-backend/internal/db"
 	"net/http"
 )
 
