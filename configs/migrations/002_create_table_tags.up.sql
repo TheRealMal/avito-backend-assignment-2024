@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS tags (
+    id BIGINT NOT NULL,
+    banner_id BIGINT NOT NULL REFERENCES banners(id)
+);

@@ -1,0 +1,27 @@
+version: '3.9'
+name: avito-backend
+services:
+  postgres:
+    image: postgres:alpine
+    env_file:
+      - .env
+    volumes:
+      - ./configs/migrations:/docker-entrypoint-initdb.d/
+    ports:
+      - 5433:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+    restart: always
+
+  server:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
