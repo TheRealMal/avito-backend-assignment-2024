@@ -1,4 +1,6 @@
 # [Avito Backend Trainee Project](https://github.com/avito-tech/backend-trainee-assignment-2024?tab=readme-ov-file)
+
+Service stores banners in Postgres, has simple cache for user get banner request with (TTL=5 Minutes). Exposes interaction methods via REST API. Can be deployed via docker-compose. 
 You can find postman API docs [here](https://documenter.getpostman.com/view/30507430/2sA3BgAFUB).
 
 ## Some thoughts...
@@ -16,9 +18,8 @@ You can find postman API docs [here](https://documenter.getpostman.com/view/3050
 
 > Didn't make cache struct over db struct because only one method is cached.
 
-
 ## Commands
-### Run
+### Deploy
 ```shell
 docker-compose up -d --build
 ```
