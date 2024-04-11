@@ -22,6 +22,9 @@ migrate-drop:
 app.o:
 	go build -o app.o ./cmd/server/...
 
+test:
+	go test ./internal/test -v
+
 # Build executable
 build: app.o
 
@@ -31,7 +34,7 @@ run: app.o
 
 # Clean compiled & generated files
 clean:
-	rm -rf app.o tests/*.txt
+	rm -rf app.o test/*
 
 # Rebuild executable
 rebuild: clean build
@@ -41,7 +44,29 @@ rerun: rebuild run
 
 # Run load test via Apache Bench
 load-test:
+	go run ./cmd/token/... ADMIN > test/.token
+	curl -s \
+	-H "Authorization: Token $$(<test/.token)" \
+	"localhost:8080/banner" | \
+	python3 -c "import sys, json; print(json.load(sys.stdin)[-1]['feature'])" > test/.feat
+	curl -s \
+	-H "Authorization: Token $$(<test/.token)" \
+	"localhost:8080/banner" | \
+	python3 -c "import sys, json; print(json.load(sys.stdin)[-1]['tags'][-1])" > test/.tag
+	
 	ab -n 1000 -c 100 \
-	-H "Authorization: Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIyMDI0LTA0LTA5VDE1OjE2OjM3LjQ3MTgxNCswMzowMCIsInJvbGUiOiJBRE1JTiJ9.SxtAMmheKazDXaAjg2zDo8FUWQrbq9Wm47o8rOcZuF0" \
-	"localhost:8080/user_banner?tag_id=1008409329&feature_id=217569698&use_last_revision=true" \
-	> tests/user_banner_rps.txt
+	-H "Authorization: Token $$(<test/.token)" \
+	"localhost:8080/user_banner?tag_id=$(<.tag)&feature_id=$(<.feat)&use_last_revision=true" \
+	> test/load_user_banner_straight_to_db.txt
+
+	ab -n 1000 -c 100 \
+	-H "Authorization: Token $$(<test/.token)" \
+	"localhost:8080/user_banner?tag_id=$(<.tag)&feature_id=$(<.feat)&use_last_revision=false" \
+	> test/load_user_banner_cached.txt
+
+	ab -n 1000 -c 100 \
+	-H "Authorization: Token $$(<test/.token)" \
+	"localhost:8080/banner" \
+	> test/load_banner.txt
+
+	rm test/.feat test/.tag test/.token

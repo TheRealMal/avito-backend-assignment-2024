@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const (
@@ -26,8 +26,14 @@ const (
 	cacheTTL = 5 * time.Minute
 )
 
+type dbpool interface {
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
+}
+
 type SQLDatabase struct {
-	pool  *pgxpool.Pool
+	pool  dbpool
 	cache map[[2]int]CachedData
 	mu    *sync.RWMutex
 }
@@ -37,22 +43,18 @@ type CachedData struct {
 	IsActive bool
 }
 
-func InitDB(databaseURL string) (SQLDatabase, error) {
-	res := SQLDatabase{}
-	var err error
-
-	res.pool, err = pgxpool.New(context.Background(), databaseURL)
-	if err != nil {
-		return res, err
+func InitDB(ctx context.Context, dbPool dbpool) SQLDatabase {
+	result := SQLDatabase{
+		cache: make(map[[2]int]CachedData),
+		mu:    &sync.RWMutex{},
+		pool:  dbPool,
 	}
-	res.cache = make(map[[2]int]CachedData)
-	res.mu = &sync.RWMutex{}
-	return res, nil
+	go result.startInvalidator(ctx)
+	return result
 }
 
 type Database interface {
-	Close()
-	StartInvalidator(context.Context)
+	startInvalidator(context.Context)
 
 	CacheGetBannerContent(int, int) (*json.RawMessage, bool, bool)
 	CacheSetBannerContent(int, int, *json.RawMessage, bool)
@@ -64,11 +66,7 @@ type Database interface {
 	DeleteBanner(int) (bool, error)
 }
 
-func (db SQLDatabase) Close() {
-	db.pool.Close()
-}
-
-func (db SQLDatabase) StartInvalidator(ctx context.Context) {
+func (db SQLDatabase) startInvalidator(ctx context.Context) {
 	tt := time.NewTicker(cacheTTL)
 
 	for {

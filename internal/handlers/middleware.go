@@ -3,11 +3,11 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"go.uber.org/zap"
 )
 
 const (
@@ -16,23 +16,27 @@ const (
 	UserRole          = "USER"
 )
 
+var jwtSecret = []byte("b112ebdd305b9191fe782f798fd922bf36784296a93720b8cc32469f263bc670")
+
 type ContextKey int
 
-const (
-	ContextRoleKey ContextKey = iota
-)
+const ContextRoleKey ContextKey = iota
 
-var (
-	jwtSecret []byte   = []byte("b112ebdd305b9191fe782f798fd922bf36784296a93720b8cc32469f263bc670")
-	roles     []string = []string{AdminRole, UserRole}
-)
-
-type UniqueClaims struct {
-	jwt.StandardClaims
-	TokenId string `json:"jti,omitempty"`
+func (s ServiceHandler) LogMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		s.log.Info("req_details",
+			zap.String("method", r.Method),
+			zap.String("remote_addr", r.RemoteAddr),
+			zap.String("url", r.URL.Path),
+			zap.String("query", r.URL.RawQuery),
+			zap.Duration("work_time", time.Since(start)),
+		)
+	})
 }
 
-func AdminMiddleware(next http.Handler) http.Handler {
+func (s ServiceHandler) AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := []rune(r.Header.Get("Authorization"))
 		if len(token) <= MinAuthHeadersLen {
@@ -52,7 +56,7 @@ func AdminMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func UserMiddleware(next http.Handler) http.Handler {
+func (s ServiceHandler) UserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := []rune(r.Header.Get("Authorization"))
 		if len(token) <= MinAuthHeadersLen {
@@ -86,7 +90,6 @@ func checkToken(inputToken string, checkRole string) (string, error) {
 	// Parse incoming string
 	token, err := jwt.Parse(inputToken, hashSecretGetter)
 	if err != nil {
-		fmt.Println(err)
 		return "", errors.New("bad token")
 	}
 	if !token.Valid {
@@ -98,7 +101,7 @@ func checkToken(inputToken string, checkRole string) (string, error) {
 	if !ok {
 		return "", errors.New("bad token")
 	}
-	// Get field "role" and verify
+	// Get field role and expiration time
 	userRole, ok := payload["role"].(string)
 	if !ok {
 		return "", errors.New("bad token")
@@ -108,7 +111,8 @@ func checkToken(inputToken string, checkRole string) (string, error) {
 
 func NewJWT(role string) *string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp":  time.Now().Add(60 * time.Minute),
+		"sub":  "0",
+		"iat":  time.Now().Unix(),
 		"role": role,
 	})
 	tokenString, err := token.SignedString(jwtSecret)

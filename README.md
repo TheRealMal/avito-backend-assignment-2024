@@ -18,15 +18,29 @@ You can find postman API docs [here](https://documenter.getpostman.com/view/3050
 
 
 ## Commands
-### Server
+### Run
 ```shell
-docker-compose up -d
+docker-compose up -d --build
+```
+### Generate JWT token
+```shell
+go run ./cmd/token/... ADMIN
+or
+go run ./cmd/token/... USER
 ```
 
+### Test
+```shell
+make test
+```
 ## Load testing
 Load testing can be performed via Apache Bench. Results can be viewied inside `tests` directory.
 ```shell
 make load-test
+```
+## Local run w/o postgres
+```shell
+make run
 ```
 
 ## TODO
@@ -43,12 +57,15 @@ make load-test
 - [x] Implement users & admins auth via JWT
     - [x] Users auth
     - [x] Admins auth
-- [x] Add cache (Simple map cache)
+- [x] Implement cache (Simple map cache)
     - [x] Add goroutine that clears cache every 5 mins
 - [x] Add graceful shutdown
 - [x] If banner is inactive then only admins can access it.
     - [x] Pass context with role for /user_banner to check if content should be shown
     - [x] Add is_active field to cache
-- [ ] Add functional tests
-- [ ] Add load tests
+- [x] Add logs
+- [x] Add functional tests
+- [x] Add load tests
+    - [x] Load testing command
+    - [x] Add load testing results
 - [x] Pack app into image and make docker compose file

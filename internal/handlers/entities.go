@@ -3,15 +3,19 @@ package handlers
 import (
 	"avito-backend/internal/db"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 type ServiceHandler struct {
-	db db.Database
+	db  db.Database
+	log *zap.Logger
 }
 
-func NewServiceHandler(database db.Database) ServiceHandler {
+func NewServiceHandler(database db.Database, logger *zap.Logger) ServiceHandler {
 	return ServiceHandler{
-		db: database,
+		db:  database,
+		log: logger,
 	}
 }
 

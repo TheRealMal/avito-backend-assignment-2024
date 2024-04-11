@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,60 +13,85 @@ import (
 	"avito-backend/internal/db"
 	"avito-backend/internal/handlers"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 const gracefulShutdownTime = 2 * time.Second
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
 	// Load environment variables
 	_ = godotenv.Load(".env")
 	dbHost, dbName, dbUser, dbPass := os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD")
 
 	// Connect to db
+	logger.Info("connecting to db")
 	databaseURL := fmt.Sprintf("postgres://%s:%s@%s:5432/%s", dbUser, dbPass, dbHost, dbName)
-	database, err := db.InitDB(databaseURL)
+	dbPool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to db: %s\n", err.Error())
+		logger.Fatal("failed to connect to db",
+			zap.Error(err),
+		)
 	}
-	defer database.Close()
-
-	// Start db cache invalidator
-	ctx, cancel := context.WithCancel(context.Background())
-	go database.StartInvalidator(ctx)
+	defer dbPool.Close()
+	database := db.InitDB(ctx, dbPool)
 
 	// Init server mux
-	s := handlers.NewServiceHandler(database)
-	mux := http.NewServeMux()
-	mux.Handle("/banner", handlers.AdminMiddleware(http.HandlerFunc(s.HandleBanner)))
-	mux.Handle("/banner/", handlers.AdminMiddleware(http.HandlerFunc(s.HandleBannerID)))
-	mux.Handle("/user_banner", handlers.UserMiddleware(http.HandlerFunc(s.HandleUserBanner)))
+	s := handlers.NewServiceHandler(database, logger)
+
+	adminMux := http.NewServeMux()
+	adminMux.HandleFunc("/banner", s.HandleBanner)
+	adminMux.HandleFunc("/banner/", s.HandleBannerID)
+	adminHandler := s.AdminMiddleware(adminMux)
+
+	userMux := http.NewServeMux()
+	userMux.HandleFunc("/user_banner", s.HandleUserBanner)
+	userHandler := s.UserMiddleware(userMux)
+
+	siteMux := http.NewServeMux()
+	siteMux.Handle("/banner", adminHandler)
+	siteMux.Handle("/user_banner", userHandler)
+
+	httpHandler := s.LogMiddleware(siteMux)
+
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: httpHandler,
 	}
 
 	// Start server
 	go func() {
+		logger.Info("starting server")
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("http server error: %v", err)
+			logger.Fatal("http server error",
+				zap.Error(err),
+			)
 		}
-		log.Println("http server stopped")
+		logger.Info("http server stopped")
 	}()
 
 	// Wait for kill signal
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
+	logger.Info("got termination signal")
 
 	// Stop invalidator, graceful shutdown server
 	// db connection is closed via defer
+	logger.Info("gracefully shutting down")
 	cancel()
 	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), gracefulShutdownTime)
 	defer shutdownRelease()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("http shutdown error: %v", err)
+		logger.Fatal("http server shutdown error",
+			zap.Error(err),
+		)
 	}
-	log.Println("graceful shutdown complete.")
+	logger.Info("graceful shutdown complete")
 }
