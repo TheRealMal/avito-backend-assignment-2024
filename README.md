@@ -64,7 +64,7 @@ make run
     - [x] Pass context with role for /user_banner to check if content should be shown
     - [x] Add is_active field to cache
 - [x] Add logs
-- [x] Add functional tests
+- [x] /user_banner tests
 - [x] Add load tests
     - [x] Load testing command
     - [x] Add load testing results
