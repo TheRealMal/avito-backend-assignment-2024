@@ -34,12 +34,12 @@ go run ./cmd/token/... USER
 ```shell
 make test
 ```
-## Load testing
+### Load testing
 Load testing can be performed via Apache Bench. Results can be viewied inside `tests` directory.
 ```shell
 make load-test
 ```
-## Local run w/o postgres
+### Local run w/o postgres
 ```shell
 make run
 ```
