@@ -18,6 +18,8 @@ You can find postman API docs [here](https://documenter.getpostman.com/view/3050
 
 > Didn't make cache struct over db struct because only one method is cached.
 
+> Uploaded .env file intentionally
+
 ## Commands
 ### Deploy
 ```shell
