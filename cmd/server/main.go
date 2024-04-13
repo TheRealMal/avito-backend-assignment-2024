@@ -30,12 +30,7 @@ func main() {
 	defer logger.Sync() //nolint:errcheck
 
 	// Load environment variables
-	err = godotenv.Load(".env")
-	if err != nil {
-		logger.Fatal("failed to load .env file",
-			zap.Error(err),
-		)
-	}
+	_ = godotenv.Load(".env") //nolint:errcheck
 	dbHost, dbName, dbUser, dbPass := os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD")
 
 	// Connect to db
