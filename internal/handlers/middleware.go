@@ -43,7 +43,7 @@ func (s ServiceHandler) AdminMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		role, err := checkToken(string(token[MinAuthHeadersLen:]), AdminRole)
+		role, err := checkToken(string(token[MinAuthHeadersLen:]))
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -63,7 +63,7 @@ func (s ServiceHandler) UserMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		role, err := checkToken(string(token[MinAuthHeadersLen:]), AdminRole)
+		role, err := checkToken(string(token[MinAuthHeadersLen:]))
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -78,7 +78,7 @@ func (s ServiceHandler) UserMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func checkToken(inputToken string, checkRole string) (string, error) {
+func checkToken(inputToken string) (string, error) {
 	hashSecretGetter := func(token *jwt.Token) (interface{}, error) {
 		method, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok || method.Alg() != "HS256" {

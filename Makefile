@@ -18,29 +18,22 @@ migrate-drop:
 #	App build & run
 # -------------------------
 
-# For next targets
-app.o:
-	go build -o app.o ./cmd/server/...
 
-test:
-	go test ./internal/test -v
+# Docker compose build & run
+run:
+	docker-compose up -d --build
 
-# Build executable
-build: app.o
+# Docker compose stop
+stop:
+	docker-compose down
 
-# Run executable
-run: app.o
-	./app.o
+lint:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
+	golangci-lint run -c .golangci.yml
 
 # Clean compiled & generated files
 clean:
-	rm -rf app.o test/*
-
-# Rebuild executable
-rebuild: clean build
-
-# Rebuild and run executable
-rerun: rebuild run
+	rm -rf test/*
 
 # Run load test via Apache Bench
 load-test:

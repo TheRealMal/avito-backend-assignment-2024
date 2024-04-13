@@ -74,6 +74,6 @@ func (s ServiceHandler) HandleBannerIDDelete(w http.ResponseWriter, r *http.Requ
 }
 
 func getBannerID(path string) (int, error) {
-	str_id := strings.TrimPrefix(path, "/banner/")
-	return strconv.Atoi(str_id)
+	strID := strings.TrimPrefix(path, "/banner/")
+	return strconv.Atoi(strID)
 }

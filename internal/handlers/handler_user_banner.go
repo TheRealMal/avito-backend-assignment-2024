@@ -19,22 +19,22 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Take params from URL
-	query_values := r.URL.Query()
-	tag_id := query_values.Get("tag_id")
-	feature_id := query_values.Get("feature_id")
-	use_last_revision := query_values.Get("use_last_revision")
+	queryValues := r.URL.Query()
+	tagID := queryValues.Get("tag_id")
+	featureID := queryValues.Get("feature_id")
+	useLastRevision := queryValues.Get("use_last_revision")
 
 	// Check required params and some formats
 	switch {
-	case len(tag_id) == 0:
+	case len(tagID) == 0:
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	case len(feature_id) == 0:
+	case len(featureID) == 0:
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	params := parseUserBannerParams(tag_id, feature_id, use_last_revision)
+	params := parseUserBannerParams(tagID, featureID, useLastRevision)
 	if params == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -60,9 +60,11 @@ func (s ServiceHandler) HandleUserBanner(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(*response)
+		_, err = w.Write(*response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	case err == nil && response == nil:
 		w.WriteHeader(http.StatusNotFound)
 	case err != nil && response == nil:
