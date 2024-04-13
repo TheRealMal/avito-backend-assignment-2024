@@ -20,10 +20,17 @@ You can find postman API docs [here](https://documenter.getpostman.com/view/3050
 
 > Uploaded .env file intentionally
 
+> Didn't use index to upscale /user_banner rps, but in case when we don't care about write/update our tables we can add index for 
+> banners.feature and tags.id, but I don't really believe that we will have big performance boost.
+
 ## Commands
 ### Deploy
 ```shell
-docker-compose up -d --build
+make run
+```
+### Shutdown
+```shell
+make stop
 ```
 
 ### Generate JWT token
