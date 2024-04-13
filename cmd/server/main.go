@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,11 +23,19 @@ const gracefulShutdownTime = 2 * time.Second
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to start logger: %s", err.Error())
+	}
+	defer logger.Sync() //nolint:errcheck
 
 	// Load environment variables
-	_ = godotenv.Load(".env")
+	err = godotenv.Load(".env")
+	if err != nil {
+		logger.Fatal("failed to load .env file",
+			zap.Error(err),
+		)
+	}
 	dbHost, dbName, dbUser, dbPass := os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD")
 
 	// Connect to db

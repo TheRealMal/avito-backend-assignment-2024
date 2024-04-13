@@ -18,11 +18,21 @@ You can find postman API docs [here](https://documenter.getpostman.com/view/3050
 
 > Didn't make cache struct over db struct because only one method is cached.
 
+> Uploaded .env file intentionally
+
+> Didn't use index to upscale /user_banner rps, but in case when we don't care about write/update our tables we can add index for 
+> banners.feature and tags.id, but I don't really believe that we will have big performance boost.
+
 ## Commands
 ### Deploy
 ```shell
-docker-compose up -d --build
+make run
 ```
+### Shutdown
+```shell
+make stop
+```
+
 ### Generate JWT token
 ```shell
 go run ./cmd/token/... ADMIN
@@ -34,14 +44,14 @@ go run ./cmd/token/... USER
 ```shell
 make test
 ```
+### Linter
+```shell
+make lint
+```
 ### Load testing
 Load testing can be performed via Apache Bench. Results can be viewied inside `tests` directory.
 ```shell
 make load-test
-```
-### Local run w/o postgres
-```shell
-make run
 ```
 
 ## TODO
@@ -70,3 +80,4 @@ make run
     - [x] Load testing command
     - [x] Add load testing results
 - [x] Pack app into image and make docker compose file
+- [x] Linter

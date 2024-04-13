@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,8 +17,11 @@ import (
 )
 
 func TestUserBanner(t *testing.T) {
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to init logger: %s", err.Error())
+	}
+	defer logger.Sync() //nolint:errcheck
 
 	mock, err := pgxmock.NewPool()
 	if err != nil {
